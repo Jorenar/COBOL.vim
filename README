@@ -1,0 +1,9 @@
+This is a mirror of http://www.vim.org/scripts/script.php?script_id=1655
+
+Shipped with Vim as of 7.1
+
+The indent plugin understands the column requirements of COBOL (Area A vs. Area B, comment indicator indented 6 spaces, etc.) and also neatly formats nested blocks and fields.  It works quite well for the code I have used it with; further feedback is appreciated.
+
+The ftplugin is designed to help comply with COBOL's insane column requirements.  <C-T>, <C-D>, and <Tab> are remapped in insert mode to stop in columns 1, 7, 8 (Area A), and 12 (Area B) before switching to the use of shiftwidth/softtabstop.  In normal mode, << and >> are remapped to ignore the first 7 columns, and with Vim 7, < and > serve as more general operator maps (>ap to indent a paragraph).  These two behaviors (insert vs. normal mode) are a bit different but generally what one would expect.
+
+This script works well coupled with vimscript #1654 .
