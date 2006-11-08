@@ -1,7 +1,7 @@
 " Vim indent file
 " Language:	cobol
 " Author:	Tim Pope <vimNOSPAM@tpope.info>
-" $Id: cobol.vim,v 1.1 2006/09/13 22:41:40 tpope Exp $
+" $Id: cobol.vim,v 1.2 2006/11/08 17:00:46 tpope Exp $
 
 if exists("b:did_indent")
     finish
@@ -140,7 +140,7 @@ function! GetCobolIndent(lnum) abort
             let ind = ind + &sw
         endif
     endif
-    if line =~? '^\%(IF\|THEN\|READ\|EVALUATE\|SEARCH\|SELECT\)\>'
+    if line =~? '^\%(IF\|THEN\|ELSE\|READ\|EVALUATE\|SEARCH\|SELECT\)\>'
         let ind = ind + &sw
     endif
     let ind = s:optionalblock(a:lnum,ind,'ADD\|COMPUTE\|DIVIDE\|MULTIPLY\|SUBTRACT','ON\s\+SIZE\s\+ERROR')
@@ -162,9 +162,10 @@ function! GetCobolIndent(lnum) abort
     elseif line =~? '^WHEN\>'
         let ind = ind + &sw
     endif
-    if line =~? '^ELSE\>-\@!' && line !~? '\.$'
-        let ind = indent(s:prevgood(lnum))
-    endif
+    "I'm not sure why I had this
+    "if line =~? '^ELSE\>-\@!' && line !~? '\.$'
+        "let ind = indent(s:prevgood(lnum))
+    "endif
     if cline =~? '^\(END\)\>-\@!'
         " On lines with just END, 'guess' a simple shift left
         let ind = ind - &sw
