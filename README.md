@@ -4,6 +4,10 @@ COBOL.vim
 Vim runtime files for COBOL programming language
 
 ## Installation
+
+Use your favourite plugin manager - just make sure plugin will be earlier
+in order than default `$VIMRUNTIME`.
+
 ### [minPlug](https://github.com/Jorengarenar/minPlug):
 ```
 MinPlug Jorengarenar/COBOl.vim
