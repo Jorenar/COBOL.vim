@@ -13,6 +13,7 @@ endfunction
 let b:cobol_colorcolumns = s:get("cobol_colorcolumns", 0)
 let b:cobol_folding      = s:get("cobol_folding",      0)
 let b:cobol_legacy_code  = s:get("cobol_legacy_code",  0)
+let b:cobol_autoupper    = s:get("cobol_autoupper",    0)
 
 setlocal commentstring=\ \ \ \ \ \ *%s
 setlocal comments=:*:C
@@ -95,7 +96,7 @@ if !get(g:, "no_plugin_maps", 0) && !get(g:, "no_cobol_maps", 0)
             \ . " | sil! exe 'unmap  <buffer> ]['"
 endif
 
-if get(g:, "cobol_autoupper", 0)
+if b:cobol_autoupper
   let g:omni_syntax_group_exclude_cobol = 'cobolBadLine,cobolComment,cobolDivision,cobolSection,cobolTodo'
 
   function! s:upper(k)

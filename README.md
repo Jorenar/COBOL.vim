@@ -35,6 +35,7 @@ Global (or buffer) variables:
 | `cobol_legacy_code`       |   `0`   | set to `1` for legacy mode
 | `cobol_colorcolumns`      |   `0`   | set to `1` for borders between areas
 | `cobol_folding`           |   `0`   | set to `1` for syntax based code folding
+| `cobol_autoupper`         |   `0`   | set to `1` to automatically change keywords to uppercase
 | `cobol_indent_data_items` |   `1`   | indentation of items in `DATA DIVISION` (`0` - all in area A, `1` - to area B, `2` - each level more indented)
 | `cobol_indent_id_paras`   |   `0`   | indent paragraphs in `IDENTIFICATION DIVISION` to area B
 | `cobol_indent_paras_B`    |   `0`   | indent all paragraphs declarations to area B
