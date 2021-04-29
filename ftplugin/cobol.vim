@@ -1,266 +1,124 @@
 " Vim filetype plugin file
-" Language:	cobol
-" Author:	Tim Pope <vimNOSPAM@tpope.info>
-" $Id: cobol.vim,v 1.4 2006/11/08 17:01:54 tpope Exp $
+" Language:	  COBOL
+" Maintainer: Jorengarenar <dev@joren.ga>
+"     (formerly Tim Pope <vimNOSPAM@tpope.info>)
 
-" Insert mode mappings: <C-T> <C-D> <Tab>
-" Normal mode mappings: < > << >> [[ ]] [] ][
-" Visual mode mappings: < >
+if exists("b:did_ftplugin") | finish | endif
+let s:cpo_save = &cpo | set cpo&vim
 
-if exists("b:did_ftplugin")
-    finish
-endif
-let b:did_ftplugin = 1
+function! s:get(var, def) abort
+  return get(b:, a:var, get(g:, a:var, a:def))
+endfunction
 
-let s:cpo_save = &cpo
-set cpo&vim
+let b:cobol_colorcolumns = s:get("cobol_colorcolumns", 0)
+let b:cobol_folding      = s:get("cobol_folding",      0)
+let b:cobol_legacy_code  = s:get("cobol_legacy_code",  0)
 
 setlocal commentstring=\ \ \ \ \ \ *%s
-setlocal comments=:*
-setlocal fo+=croqlt
+setlocal comments=:*:C
+setlocal formatoptions+=croqlt
 setlocal expandtab
 setlocal textwidth=72
+setlocal iskeyword=@,48-57,-,_
+
+let b:undo_ftplugin = "setlocal com< cms< fo< et< tw< isk<"
+
+if b:cobol_colorcolumns
+  setlocal colorcolumn=7,73,80
+  let b:undo_ftplugin .= " cc<"
+endif
+
+if b:cobol_folding
+  setlocal foldmethod=syntax
+  let b:undo_ftplugin .= " fdm<"
+endif
 
 " matchit support
-if exists("loaded_matchit")
-    let s:ordot = '\|\ze\.\%( \@=\|$\)'
-    let b:match_ignorecase=1
-    "let b:match_skip = 'getline(".") =~ "^.\\{6\\}[*/C]"'
-    let b:match_words=
-    \ '\$if\>:$else\>:\$endif\>,' .
-    \ '[$-]\@<!\<if\>:\<\%(then\|else\)\>:\<end-if\>'.s:ordot.',' .
-    \ '-\@<!\<perform\s\+\%(\d\+\s\+times\|until\|varying\|with\s\+test\)\>:\<end-perform\>'.s:ordot . ',' .
-    \ '-\@<!\<\%(search\|evaluate\)\>:\<\%(when\)\>:\<end-\%(search\|evaluate\)\>' .s:ordot . ',' .
-    \ '-\@<!\<\%(add\|compute\|divide\|multiply\|subtract\)\>\%(.*\(\%$\|\%(\n\%(\%(\s*\|.\{6\}\)[*/].*\n\)*\)\=\s*\%(not\s\+\)\=on\s\+size\s\+error\>\)\)\@=:\%(\<not\s\+\)\@<!\<\%(not\s\+\)\=on\s\+size\s\+error\>:\<end-\%(add\|compute\|divide\|multiply\|subtract\)\>' .s:ordot . ',' .
-    \ '-\@<!\<\%(string\|unstring\|accept\|display\|call\)\>\%(.*\(\%$\|\%(\n\%(\%(\s*\|.\{6\}\)[*/].*\n\)*\)\=\s*\%(not\s\+\)\=on\s\+\%(overflow\|exception\)\>\)\)\@=:\%(\<not\s\+\)\@<!\<\%(not\s\+\)\=on\s\+\%(overflow\|exception\)\>:\<end-\%(string\|unstring\|accept\|display\|call\)\>' .s:ordot . ',' .
-    \ '-\@<!\<\%(delete\|rewrite\|start\|write\|read\)\>\%(.*\(\%$\|\%(\n\%(\%(\s*\|.\{6\}\)[*/].*\n\)*\)\=\s*\%(invalid\s\+key\|at\s\+end\|no\s\+data\|at\s\+end-of-page\)\>\)\)\@=:\%(\<not\s\+\)\@<!\<\%(not\s\+\)\=\%(invalid\s\+key\|at\s\+end\|no\s\+data\|at\s\+end-of-page\)\>:\<end-\%(delete\|rewrite\|start\|write\|read\)\>' .s:ordot
+if !exists("b:match_words") && exists("loaded_matchit")
+  let b:match_ignorecase = !b:cobol_legacy_code
+
+  let s:ordot = '\|\ze\.\%( \@=\|$\)'
+  let b:match_words=
+        \ '\$IF\>:$ELSE\>:\$ENDIF\>,' .
+        \ '[$-]\@<!\<if\>:\<\%(THEN\|ELSE\)\>:\<END-IF\>'.s:ordot.',' .
+        \ '-\@<!\<PERFORM\s\+\%(\d\+\s\+TIMES\|UNTIL\|VARYING\|WITH\s\+TEST\)\>:\<END-PERFORM\>'.s:ordot . ',' .
+        \ '-\@<!\<\%(SEARCH\|EVALUATE\)\>:\<\%(WHEN\)\>:\<END-\%(SEARCH\|EVALUATE\)\>' .s:ordot . ',' .
+        \ '-\@<!\<\%(ADD\|COMPUTE\|DIVIDE\|MULTIPLY\|SUBTRACT\)\>\%(.*\(\%$\|\%(\n\%(\%(\s*\|.\{6\}\)[*/].*\n\)*\)\=\s*\%(not\s\+\)\=ON\s\+SIZE\s\+ERROR\>\)\)\@=:\%(\<NOT\s\+\)\@<!\<\%(NOT\s\+\)\=ON\s\+SIZE\s\+ERROR\>:\<END-\%(ADD\|COMPUTE\|DIVIDE\|MULTIPLY\|SUBTRACT\)\>' .s:ordot . ',' .
+        \ '-\@<!\<\%(STRING\|UNSTRING\|ACCEPT\|DISPLAY\|CALL\)\>\%(.*\(\%$\|\%(\n\%(\%(\s*\|.\{6\}\)[*/].*\n\)*\)\=\s*\%(NOT\s\+\)\=ON\s\+\%(OVERFLOW\|EXCEPTION\)\>\)\)\@=:\%(\<NOT\s\+\)\@<!\<\%(NOT\s\+\)\=ON\s\+\%(OVERFLOW\|EXCEPTION\)\>:\<END-\%(STRING\|UNSTRING\|ACCEPT\|DISPLAY\|CALL\)\>' .s:ordot . ',' .
+        \ '-\@<!\<\%(DELETE\|REWRITE\|START\|WRITE\|READ\)\>\%(.*\(\%$\|\%(\n\%(\%(\s*\|.\{6\}\)[*/].*\n\)*\)\=\s*\%(INVALID\s\+KEY\|AT\s\+END\|NO\s\+DATA\|AT\s\+END-OF-PAGE\)\>\)\)\@=:\%(\<NOT\s\+\)\@<!\<\%(NOT\s\+\)\=\%(INVALID\s\+KEY\|AT\s\+END\|NO\s\+DATA\|AT\s\+END-OF-PAGE\)\>:\<END-\%(DELETE\|REWRITE\|START\|WRITE\|READ\)\>' .s:ordot
 endif
 
-if has("gui_win32") && !exists("b:browsefilter")
-  let b:browsefilter = "COBOL Source Files (*.cbl, *.cob)\t*.cbl;*.cob;*.lib\n".
-		     \ "All Files (*.*)\t*.*\n"
-endif
+let b:undo_ftplugin .= " | unlet! b:match_words b:match_ignorecase b:match_skip"
 
-let b:undo_ftplugin = "setlocal com< cms< fo< et< tw<" .
-            \ " | unlet! b:browsefilter b:match_words b:match_ignorecase b:match_skip"
-if !exists("g:no_plugin_maps") && !exists("g:no_cobol_maps")
-    let b:undo_ftplugin = b:undo_ftplugin .
-            \ " | sil! exe 'nunmap <buffer> <'" .
-            \ " | sil! exe 'nunmap <buffer> >'" .
-            \ " | sil! exe 'nunmap <buffer> <<'" .
-            \ " | sil! exe 'nunmap <buffer> >>'" .
-            \ " | sil! exe 'vunmap <buffer> <'" .
-            \ " | sil! exe 'vunmap <buffer> >'" .
-            \ " | sil! exe 'iunmap <buffer> <C-D>'" .
-            \ " | sil! exe 'iunmap <buffer> <C-T>'" .
-            \ " | sil! exe 'iunmap <buffer> <Tab>'" .
-            \ " | sil! exe 'nunmap <buffer> <Plug>Traditional'" .
-            \ " | sil! exe 'nunmap <buffer> <Plug>Comment'" .
-            \ " | sil! exe 'nunmap <buffer> <Plug>DeComment'" .
-            \ " | sil! exe 'vunmap <buffer> <Plug>VisualTraditional'" .
-            \ " | sil! exe 'vunmap <buffer> <Plug>VisualComment'" .
-            \ " | sil! exe 'iunmap <buffer> <Plug>VisualDeComment'" .
-            \ " | sil! exe 'unmap  <buffer> [['" .
-            \ " | sil! exe 'unmap  <buffer> ]]'" .
-            \ " | sil! exe 'unmap  <buffer> []'" .
-            \ " | sil! exe 'unmap  <buffer> ]['"
-endif
-
-if !exists("g:no_plugin_maps") && !exists("g:no_cobol_maps")
+" Normal mode mappings: < > << >> [[ ]] [] ][
+" Visual mode mappings: < >
+" Insert mode mappings: <C-T> <C-D> <Tab>
+if !get(g:, "no_plugin_maps", 0) && !get(g:, "no_cobol_maps", 0)
     if version >= 700
-        nnoremap <silent> <buffer> > :set opfunc=<SID>IncreaseFunc<CR>g@
-        nnoremap <silent> <buffer> < :set opfunc=<SID>DecreaseFunc<CR>g@
+        nnoremap <silent> <buffer> > :set opfunc=cobol#IncreaseFunc<CR>g@
+        nnoremap <silent> <buffer> < :set opfunc=cobol#DecreaseFunc<CR>g@
+
+        let b:undo_ftplugin = b:undo_ftplugin
+              \ . " | sil! exe 'nunmap <buffer> >'"
+              \ . " | sil! exe 'nunmap <buffer> <'"
     endif
-    nnoremap <silent> <buffer> >> :call CobolIndentBlock(1)<CR>
-    nnoremap <silent> <buffer> << :call CobolIndentBlock(-1)<CR>
-    vnoremap <silent> <buffer> > :call CobolIndentBlock(v:count1)<CR>
-    vnoremap <silent> <buffer> < :call CobolIndentBlock(-v:count1)<CR>
-    inoremap <silent> <buffer> <C-T> <C-R>=<SID>IncreaseIndent()<CR><C-R>=<SID>RestoreShiftwidth()<CR>
-    inoremap <silent> <buffer> <C-D> <C-R>=<SID>DecreaseIndent()<CR><C-R>=<SID>RestoreShiftwidth()<CR>
-    if !maparg("<Tab>","i")
-        inoremap <silent> <buffer> <Tab> <C-R>=<SID>Tab()<CR><C-R>=<SID>RestoreShiftwidth()<CR>
+
+    nnoremap <silent> <buffer> >> :call cobol#IndentBlock(1)<CR>
+    nnoremap <silent> <buffer> << :call cobol#IndentBlock(-1)<CR>
+    vnoremap <silent> <buffer> > :call cobol#IndentBlock(v:count1)<CR>
+    vnoremap <silent> <buffer> < :call cobol#IndentBlock(-v:count1)<CR>
+    inoremap <silent> <buffer> <C-T> <C-R>=cobol#IncreaseIndent()<CR><C-R>=cobol#RestoreShiftwidth()<CR>
+    inoremap <silent> <buffer> <C-D> <C-R>=cobol#DecreaseIndent()<CR><C-R>=cobol#RestoreShiftwidth()<CR>
+
+    if !maparg("<Tab>", "i")
+      inoremap <silent> <buffer> <Tab> <C-R>=cobol#Tab()<CR><C-R>=cobol#RestoreShiftwidth()<CR>
+      let b:undo_ftplugin .= " | sil! exe 'iunmap <buffer> <Tab>'"
     endif
-    noremap <silent> <buffer> [[ m':call search('\c^\%(\s*\<Bar>.\{6\}\s\+\)\zs[A-Za-z0-9-]\+\s\+\%(division\<Bar>section\)\s*\.','bW')<CR>
-    noremap <silent> <buffer> ]] m':call search('\c^\%(\s*\<Bar>.\{6\}\s\+\)\zs[A-Za-z0-9-]\+\s\+\%(division\<Bar>section\)\.','W')<CR>
-    noremap <silent> <buffer> [] m':call <SID>toend('b')<CR>
-    noremap <silent> <buffer> ][ m':call <SID>toend('')<CR>
-    " For EnhancedCommentify
-    noremap <silent> <buffer> <Plug>Traditional      :call <SID>Comment('t')<CR>
-    noremap <silent> <buffer> <Plug>Comment          :call <SID>Comment('c')<CR>
-    noremap <silent> <buffer> <Plug>DeComment        :call <SID>Comment('u')<CR>
-    noremap <silent> <buffer> <Plug>VisualTraditional :'<,'>call <SID>Comment('t')<CR>
-    noremap <silent> <buffer> <Plug>VisualComment     :'<,'>call <SID>Comment('c')<CR>
-    noremap <silent> <buffer> <Plug>VisualDeComment   :'<,'>call <SID>Comment('u')<CR>
+
+    let [ s:b, s:e ] = [ '\v\c^.{6}\s+\zs', '\k+\s+%(DIVISION<Bar>SECTION)>' ]
+    exec "noremap <silent> <buffer> ]] :call search('" . s:b . s:e . "','W')<CR>"
+    exec "noremap <silent> <buffer> [[ :call search('" . s:b . s:e . "','bW')<CR>"
+    exec "noremap <silent> <buffer> ][ :call search('" . s:b . '\k.*\n\ze\_s*' . s:e . "','W')<CR>"
+    exec "noremap <silent> <buffer> [] :call search('" . s:b . '\k.*\n\ze\_s*' . s:e . "','bW')<CR>"
+    unlet s:b s:e
+
+    let b:undo_ftplugin = b:undo_ftplugin
+            \ . " | sil! exe 'nunmap <buffer> >>'"
+            \ . " | sil! exe 'nunmap <buffer> <<'"
+            \ . " | sil! exe 'vunmap <buffer> >'"
+            \ . " | sil! exe 'vunmap <buffer> <'"
+            \ . " | sil! exe 'iunmap <buffer> <C-D>'"
+            \ . " | sil! exe 'iunmap <buffer> <C-T>'"
+            \ . " | sil! exe 'unmap  <buffer> [['"
+            \ . " | sil! exe 'unmap  <buffer> ]]'"
+            \ . " | sil! exe 'unmap  <buffer> []'"
+            \ . " | sil! exe 'unmap  <buffer> ]['"
 endif
 
-let &cpo = s:cpo_save
-unlet s:cpo_save
+if get(g:, "cobol_autoupper", 0)
+  let g:omni_syntax_group_exclude_cobol = 'cobolBadLine,cobolComment,cobolDivision,cobolSection,cobolTodo'
 
-if exists("b:did_cobol_ftplugin_functions")
-    finish
+  function! s:upper(k)
+    if synIDattr(synID(line('.'), col('.')-1, 0), "name") !~# 'Comment\|String'
+      return toupper(a:k)
+    else
+      return a:k " was comment or string, so don't change case
+    endif
+  endfunction
+
+  function! s:init_upper() abort
+    for k in syntaxcomplete#OmniSyntaxList() + [ "all", "by", "if", "to" ]
+      let k = tolower(k)
+      exec "iabbrev <expr> <buffer> " . k . " <SID>upper('" . k . "')"
+      let b:undo_ftplugin .= " | sil! exe 'iuna <buffer> " . k ."'"
+    endfor
+  endfunction
+
+  augroup COBOL_UPPER
+    autocmd!
+    autocmd Syntax <buffer> call <SID>init_upper()
+  augroup END
 endif
-let b:did_cobol_ftplugin_functions = 1
 
-function! s:repeat(str,count)
-    let i = 0
-    let ret = ""
-    while i < a:count
-        let ret = ret . a:str
-        let i = i + 1
-    endwhile
-    return ret
-endfunction
-
-function! s:increase(...)
-    let lnum = '.'
-    let sw = &shiftwidth
-    let i = a:0 ? a:1 : indent(lnum)
-    if i >= 11
-        return sw - (i - 11) % sw
-    elseif i >= 7
-        return 11-i
-    elseif i == 6
-        return 1
-    else
-        return 6-i
-    endif
-endfunction
-
-function! s:decrease(...)
-    let lnum = '.'
-    let sw = &shiftwidth
-    let i = indent(a:0 ? a:1 : lnum)
-    if i >= 11 + sw
-        return 1 + (i + 12) % sw
-    elseif i > 11
-        return i-11
-    elseif i > 7
-        return i-7
-    elseif i == 7
-        return 1
-    else
-        return i
-    endif
-endfunction
-
-function! CobolIndentBlock(shift)
-    let head = strpart(getline('.'),0,7)
-    let tail = strpart(getline('.'),7)
-    let indent = match(tail,'[^ ]')
-    let sw = &shiftwidth
-    let shift = a:shift
-    if shift > 0
-        if indent < 4
-            let tail = s:repeat(" ",4-indent).tail
-            let shift = shift - 1
-        endif
-        let tail = s:repeat(" ",shift*sw).tail
-        let shift = 0
-    elseif shift < 0
-        if (indent-4) > -shift * sw
-            let tail = strpart(tail,-shift * sw)
-        elseif (indent-4) > (-shift-1) * sw
-            let tail = strpart(tail,indent - 4)
-        else
-            let tail = strpart(tail,indent)
-        endif
-    endif
-    call setline('.',head.tail)
-endfunction
-
-function! s:IncreaseFunc(type)
-    '[,']call CobolIndentBlock(1)
-endfunction
-
-function! s:DecreaseFunc(type)
-    '[,']call CobolIndentBlock(-1)
-endfunction
-
-function! s:IncreaseIndent()
-    let c = "\<C-T>"
-    if exists("*InsertCtrlTWrapper")
-        let key = InsertCtrlTWrapper()
-        if key != c
-            return key
-        endif
-    endif
-    let interval = s:increase()
-    let b:cobol_shiftwidth = &shiftwidth
-    let &shiftwidth = 1
-    let lastchar = strpart(getline('.'),col('.')-2,1)
-    if lastchar == '0' || lastchar == '^'
-        return "\<BS>".lastchar.c
-    else
-        return s:repeat(c,interval)
-    endif
-endfunction
-
-function! s:DecreaseIndent()
-    let c = "\<C-D>"
-    if exists("*InsertCtrlDWrapper")
-        " I hack Ctrl-D to delete when not at the end of the line.
-        let key = InsertCtrlDWrapper()
-        if key != c
-            return key
-        endif
-    endif
-    let interval = s:decrease()
-    let b:cobol_shiftwidth = &shiftwidth
-    let &shiftwidth = 1
-    return s:repeat(c,interval)
-endfunction
-
-function! s:RestoreShiftwidth()
-    if exists("b:cobol_shiftwidth")
-        let &shiftwidth=b:cobol_shiftwidth
-        unlet b:cobol_shiftwidth
-    endif
-    return ""
-endfunction
-
-function! s:Tab()
-    if (strpart(getline('.'),0,col('.')-1) =~ '^\s*$' && &sta)
-        return s:IncreaseIndent()
-    elseif &sts == &sw && &sts != 8 && &et
-        return s:repeat(" ",s:increase(col('.')-1))
-    else
-        return "\<Tab>"
-    endif
-endfunction
-
-function! s:Comment(arg)
-    " For EnhancedCommentify
-    let line = getline('.')
-    if (line =~ '^.\{6\}[*/C]' || a:arg == 'c') && a:arg != 'u'
-        let line = substitute(line,'^.\{6\}\zs.',' ','')
-    else
-        let line = substitute(line,'^.\{6\}\zs.','*','')
-    endif
-    call setline('.',line)
-endfunction
-
-function! s:toend(direction)
-    let ignore = '^\(\s*\|.\{6\}\)\%([*/]\|\s*$\)'
-    let keep = line('.')
-    keepjumps +
-    while line('.') < line('$') && getline('.') =~ ignore
-        keepjumps +
-    endwhile
-    let res = search('\c^\%(\s*\|.\{6\}\s\+\)\zs[A-Za-z0-9-]\+\s\+\%(division\|section\)\s*\.',a:direction.'W')
-    if a:direction != 'b' && !res
-        let res = line('$')
-        keepjumps $
-    elseif res
-        keepjumps -
-    endif
-    if res
-        while line('.') > 1 && getline('.') =~ ignore
-            keepjumps -
-        endwhile
-        if line('.') == 1 && getline('.') =~ ignore
-            exe "keepjumps ".keep
-        endif
-    else
-        exe "keepjumps ".keep
-    endif
-endfunction
+let b:did_ftplugin = 1
+let &cpo = s:cpo_save | unlet s:cpo_save
