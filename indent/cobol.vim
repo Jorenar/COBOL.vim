@@ -14,7 +14,6 @@ setlocal indentkeys+=0<*>,0/,0$,0=01,=~DIVISION,=~SECTION,0=~END,0=~THEN,0=~ELSE
 " Vars (b:/g:)
 "   cobol_indent_data_items - for DATA DIVISION: 0=none | (1)=B | 2=cascade
 "   cobol_indent_id_paras   - paragraphs in IDENTIFICATION DIVISION
-"   cobol_indent_paras_B    - indent all paragraphs to area B
 
 " Only define the function once.
 if exists("*GetCobolIndent") | finish | endif
@@ -145,10 +144,20 @@ function! s:indent(lnum) abort
     return s:sw_A
   endif
 
+  " Paragraphs
+  if cline =~? '\v^(EXIT>)@<!\k+\.' && getline(s:prevgood(a:lnum)) =~? '\.\s*$'
+    if cline =~? '^\v<(PROGRAM-ID|AUTHOR|INSTALLATION|DATE-WRITTEN|DATE-COMPILED|SECURITY)>'
+      return s:get("cobol_indent_id_paras", 0) ? s:sw_B : s:sw_A
+    endif
+    return s:sw_A
+  endif
+
   " Data items
   if cline =~? '\v^\d?\d>'
     return s:indent_data_items(cline, a:lnum)
   endif
+
+  " EVERYTHING ELSE {{{
 
   let lnum = s:prevgood(a:lnum)
 
@@ -156,19 +165,6 @@ function! s:indent(lnum) abort
 
   let line = s:stripped(lnum)
   let ind  = indent(lnum)
-
-  " Paragraphs
-  if cline =~? '\v^\k+\.'
-    " Paragraphs in the IDENTIFICATION DIVISION.
-    if s:get("cobol_indent_id_paras", 0) &&
-          \ cline =~? '^\v<(PROGRAM-ID|AUTHOR|INSTALLATION|DATE-WRITTEN|DATE-COMPILED|SECURITY)>'
-        return s:sw_B
-    endif
-
-    if cline !~? '^EXIT\s*\.' && line =~? '\.\s*$'
-      return s:get("cobol_indent_paras_B", 0) ? s:sw_B : s:sw_A
-    endif
-  endif
 
 
   " TODO: does it make sense?
@@ -266,6 +262,8 @@ function! s:indent(lnum) abort
   endif
 
   return ind < s:sw_B ? s:sw_B : ind
+
+  " }}}
 
 endfunction
 
