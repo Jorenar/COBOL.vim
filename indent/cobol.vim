@@ -30,14 +30,12 @@ function! s:get(var, def) abort
   return get(b:, a:var, get(g:, a:var, a:def))
 endfunction
 
-function! s:prevgood(lnum)
-  " Find a non-blank line above the current line.
-  " Skip over comments.
+function! s:prevgood(lnum) " Find a non-blank line above the current line.
   let lnum = a:lnum
   while lnum > 0
     let lnum = prevnonblank(lnum - 1)
     let line = getline(lnum)
-    if line !~? '^\s*[*/$-]' && line !~? '^.\{6\}[*/$CD-]'
+    if line !~? '^\s*[*/$-]' && line !~? '^.\{6\}[*/$CD-]' " Skip over comments.
       break
     endif
   endwhile
@@ -100,28 +98,27 @@ function! s:indent_data_items(cline, lnum)
 
   if x == 1 | return s:sw_B | endif
 
-  let cnum = str2nr(matchstr(a:cline, '^\d\?\d\>'))
+  let cnum = str2nr(matchstr(a:cline, '\v^\d?\d>'))
   let default = 0
-  let step    = -1
-  while step < 2
-    let lnum = a:lnum
-    while lnum > 0 && lnum < line('$') && lnum > a:lnum - 500 && lnum < a:lnum + 500
-      let lnum = step > 0 ? nextnonblank(lnum + step) : prevnonblank(lnum + step)
-      let line = getline(lnum)
-      let lindent = indent(lnum)
-      if line =~? '\v^\s*\d?\d>'
-        let num = str2nr(matchstr(line, '^\s*\zs\d\?\d\>'))
-        if cnum == num
-          return lindent
-        elseif cnum > num && default < lindent + shiftwidth()
-          let default = lindent + shiftwidth()
-        endif
-      elseif lindent < s:sw_B && lindent >= s:sw_A
-        break
+  let lnum    = a:lnum
+
+  while lnum > 0 && lnum > a:lnum - 500 && lnum < a:lnum + 500
+    let lnum = s:prevgood(lnum)
+    let line = s:stripped(lnum)
+    let ind  = indent(lnum)
+
+    if line =~? '\v^\d?\d>'
+      let num = str2nr(matchstr(line, '\v^\d?\d>'))
+      if cnum == num
+        return ind
+      elseif cnum > num && default < ind + shiftwidth()
+        let default = ind + shiftwidth()
       endif
-    endwhile
-    let step = step + 2
+    elseif ind < s:sw_B && ind >= s:sw_A
+      break
+    endif
   endwhile
+
   return default ? default : s:sw_B
 endfunction
 
@@ -144,28 +141,32 @@ function! s:indent(lnum) abort
     return s:sw_A
   endif
 
+  let lnum  = s:prevgood(a:lnum)
+
+  " Hit top of the file, so use area A indent
+  if lnum == 0 | return s:sw_A | endif
+
+  let [ line, ind ]  = [ s:stripped(lnum),  indent(lnum) ]
+
   " Paragraphs
-  if cline =~? '\v^(EXIT>)@<!\k+\.' && getline(s:prevgood(a:lnum)) =~? '\.\s*$'
+  if cline =~? '\v^(EXIT>)@<!\k+\.' && line =~? '\.\s*$'
     if cline =~? '^\v<(PROGRAM-ID|AUTHOR|INSTALLATION|DATE-WRITTEN|DATE-COMPILED|SECURITY)>'
       return s:get("cobol_indent_id_paras", 0) ? s:sw_B : s:sw_A
     endif
     return s:sw_A
   endif
 
-  " Data items
+  " Data items {{{
   if cline =~? '\v^\d?\d>'
     return s:indent_data_items(cline, a:lnum)
   endif
 
+  if line =~? '\v^\d?\d>.*[^.]$'
+    return ind + shiftwidth()
+  endif
+  " }}}
+
   " EVERYTHING ELSE {{{
-
-  let lnum = s:prevgood(a:lnum)
-
-  if lnum == 0 | return s:sw_A | endif " Hit top of the file, use area A indent
-
-  let line = s:stripped(lnum)
-  let ind  = indent(lnum)
-
 
   " TODO: does it make sense?
   if line =~? '\v^%(UNTIL)>'
@@ -273,7 +274,7 @@ function! GetCobolIndent(lnum) abort
   endif
 
   let [ ic_old, &l:ic ] = [ &l:ic, 1 ]
-  let idn = s:indent(a:lnum)
+  let ind = s:indent(a:lnum)
   let &l:ic = ic_old
-  return idn
+  return ind
 endfunction
