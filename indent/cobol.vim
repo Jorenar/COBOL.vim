@@ -9,7 +9,7 @@ let b:did_indent = 1
 setlocal expandtab
 setlocal indentexpr=GetCobolIndent(v:lnum)
 setlocal indentkeys&
-setlocal indentkeys+=0<*>,0/,0$,0=01,=~division,=~section,0=~end,0=~then,0=~else,0=~when,*<Return>,.
+setlocal indentkeys+=0<*>,0/,0$,0=01,=~DIVISION,=~SECTION,0=~END,0=~THEN,0=~ELSE,0=~WHEN,*<CR>,.
 
 " Vars (b:/g:)
 "   cobol_indent_data_items - for DATA DIVISION: 0=none | (1)=B | 2=cascade
@@ -19,7 +19,13 @@ setlocal indentkeys+=0<*>,0/,0$,0=01,=~division,=~section,0=~end,0=~then,0=~else
 " Only define the function once.
 if exists("*GetCobolIndent") | finish | endif
 
+let s:sw_min = 6
+let s:sw_A   = s:sw_min + 1
+let s:sw_B   = s:sw_A   + 4
+
 let s:skip = 'getline(".") =~ "\\v^.{6}[*/$-]|\"[^\"]*\""'
+
+" Helpers {{{
 
 function! s:get(var, def) abort
   return get(b:, a:var, get(g:, a:var, a:def))
@@ -69,10 +75,58 @@ function! s:optionalblock(lnum, ind, blocks, clauses)
   return ind
 endfunction
 
+" }}}
+
+function! s:indent_data_items(cline, lnum)
+  if a:cline =~? '\v^(0?1|66|77)>'
+    return s:sw_A
+  endif
+
+  let x = s:get("cobol_indent_data_items", 1)
+  if x == 0 | return s:sw_A | endif
+
+  if a:cline =~? '^78 '
+    let line = s:stripped(s:prevgood(a:lnum))
+    let lnum = a:lnum
+
+    while line !~? '\v<SECTION>.*($|\.)' && line !~? '\v^\d?\d '
+      let lnum -= 1
+      let line = s:stripped(s:prevgood(lnum))
+    endwhile
+
+    if line =~? '\v<SECTION>.*($|\.)' || line =~? '\v^(66|77|78)'
+      return s:sw_A
+    endif
+  endif
+
+  if x == 1 | return s:sw_B | endif
+
+  let cnum = str2nr(matchstr(a:cline, '^\d\?\d\>'))
+  let default = 0
+  let step    = -1
+  while step < 2
+    let lnum = a:lnum
+    while lnum > 0 && lnum < line('$') && lnum > a:lnum - 500 && lnum < a:lnum + 500
+      let lnum = step > 0 ? nextnonblank(lnum + step) : prevnonblank(lnum + step)
+      let line = getline(lnum)
+      let lindent = indent(lnum)
+      if line =~? '\v^\s*\d?\d>'
+        let num = str2nr(matchstr(line, '^\s*\zs\d\?\d\>'))
+        if cnum == num
+          return lindent
+        elseif cnum > num && default < lindent + shiftwidth()
+          let default = lindent + shiftwidth()
+        endif
+      elseif lindent < s:sw_B && lindent >= s:sw_A
+        break
+      endif
+    endwhile
+    let step = step + 2
+  endwhile
+  return default ? default : s:sw_B
+endfunction
+
 function! s:indent(lnum) abort
-  let sw_min = 6
-  let sw_A   = sw_min + 1
-  let sw_B   = sw_A   + 4
 
   " (Legacy) numbered lines
   if s:get("cobol_legacy_code", 0) && getline(a:lnum) =~? '\v^\s*\d{6}%($|[ */$CD-])'
@@ -82,73 +136,40 @@ function! s:indent(lnum) abort
   let cline = s:stripped(a:lnum)
 
   " Comments, debugs etc. must start in the 7th column
-  if cline =~? '^[*/$-]' || (cline =~? '^[CD]' && indent(a:lnum) == sw_min)
-    return sw_min
+  if cline =~? '^[*/$-]' || (cline =~? '^[CD]' && indent(a:lnum) == s:sw_min)
+    return s:sw_min
   endif
 
   " Divisions, sections and file descriptions start in area A
-  if cline =~? '\v<%(DIVISION|SECTION).*%($|.)' || cline =~? '^[FS]D\>'
-    return sw_A
+  if cline =~? '\v<%(DIVISION|SECTION)>.*($|\.)' || cline =~? '^[FS]D\>'
+    return s:sw_A
   endif
 
   " Data items
-  if cline =~? '\v^(0?1|77)>'
-    return sw_A
-  elseif cline =~? '\v^\d?\d>'
-    let x = s:get("cobol_indent_data_items", 1)
-    if x == 0 | return sw_A | endif
-
-    if cline =~? '^66 '
-      let i = indent(a:lnum)
-      return i > sw_min ? (x == 1 && i > sw_B : sw_B : i) : sw_A
-    endif
-
-    if x == 1 | return sw_B | endif
-
-    let cnum = str2nr(matchstr(cline, '^\d\?\d\>'))
-    let default = 0
-    let step    = -1
-    while step < 2
-      let lnum = a:lnum
-      while lnum > 0 && lnum < line('$') && lnum > a:lnum - 500 && lnum < a:lnum + 500
-        let lnum = step > 0 ? nextnonblank(lnum + step) : prevnonblank(lnum + step)
-        let line = getline(lnum)
-        let lindent = indent(lnum)
-        if line =~? '\v^\s*\d?\d>'
-          let num = str2nr(matchstr(line, '^\s*\zs\d\?\d\>'))
-          if cnum == num
-            return lindent
-          elseif cnum > num && default < lindent + shiftwidth()
-            let default = lindent + shiftwidth()
-          endif
-        elseif lindent < sw_B && lindent >= sw_A
-          break
-        endif
-      endwhile
-      let step = step + 2
-    endwhile
-    return default ? default : sw_B
+  if cline =~? '\v^\d?\d>'
+    return s:indent_data_items(cline, a:lnum)
   endif
 
   let lnum = s:prevgood(a:lnum)
 
-  if lnum == 0 | return sw_A | endif " Hit top of the file, use area A indent
+  if lnum == 0 | return s:sw_A | endif " Hit top of the file, use area A indent
 
   let line = s:stripped(lnum)
   let ind  = indent(lnum)
 
   " Paragraphs
-  if cline =~? '\v^\k+\.' "\s*$'
+  if cline =~? '\v^\k+\.'
     " Paragraphs in the IDENTIFICATION DIVISION.
     if s:get("cobol_indent_id_paras", 0) &&
           \ cline =~? '^\v<(PROGRAM-ID|AUTHOR|INSTALLATION|DATE-WRITTEN|DATE-COMPILED|SECURITY)>'
-        return sw_B
+        return s:sw_B
     endif
 
     if cline !~? '^EXIT\s*\.' && line =~? '\.\s*$'
-      return s:get("cobol_indent_paras_B", 0) ? sw_B : sw_A
+      return s:get("cobol_indent_paras_B", 0) ? s:sw_B : s:sw_A
     endif
   endif
+
 
   " TODO: does it make sense?
   if line =~? '\v^%(UNTIL)>'
@@ -244,7 +265,7 @@ function! s:indent(lnum) abort
     endif
   endif
 
-  return ind < sw_B ? sw_B : ind
+  return ind < s:sw_B ? s:sw_B : ind
 
 endfunction
 
