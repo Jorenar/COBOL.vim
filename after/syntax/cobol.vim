@@ -31,7 +31,7 @@ syn region cobolParagraphFold  transparent fold
 
 function! s:foo(kw, ...) abort
   exec 'syntax region cobol' . a:kw . ' transparent fold'
-        \ . ' containedin=cobolLine contains=@cobolLine,cobolComment'
+        \ . ' containedin=ALL contains=@cobolLine,cobolComment'
         \ . ' start = "\v(<' . a:kw . ')@<=\s' . get(a:, 1, '') . '"'
         \ . ' skip  = "\v^%(%(\s|\d){6}|\s*)?[*/C].*"'
         \ . ' end   = "\ze\<END-' . a:kw . '\>"'

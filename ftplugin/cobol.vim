@@ -10,23 +10,28 @@ function! s:get(var, def) abort
   return get(b:, a:var, get(g:, a:var, a:def))
 endfunction
 
+let b:cobol_autoupper    = s:get("cobol_autoupper",    0)
 let b:cobol_colorcolumns = s:get("cobol_colorcolumns", 0)
 let b:cobol_folding      = s:get("cobol_folding",      0)
+let b:cobol_format_free  = s:get("cobol_format_free",  0)
 let b:cobol_legacy_code  = s:get("cobol_legacy_code",  0)
-let b:cobol_autoupper    = s:get("cobol_autoupper",    0)
 
 setlocal commentstring=\ \ \ \ \ \ *%s
 setlocal comments=:*:C
 setlocal formatoptions+=croqlt
 setlocal expandtab
-setlocal textwidth=72
 setlocal iskeyword=@,48-57,-,_
 
-let b:undo_ftplugin = "setlocal com< cms< fo< et< tw< isk<"
+let b:undo_ftplugin = "setlocal com< cms< fo< et< isk<"
 
-if b:cobol_colorcolumns
-  setlocal colorcolumn=7,73,80
-  let b:undo_ftplugin .= " cc<"
+if !b:cobol_format_free
+  setlocal textwidth=72
+  let b:undo_ftplugin .= " tw<"
+
+  if b:cobol_colorcolumns
+    setlocal colorcolumn=7,73,80
+    let b:undo_ftplugin .= " cc<"
+  endif
 endif
 
 if b:cobol_folding

@@ -14,13 +14,10 @@ setlocal indentkeys+=0<*>,0/,0$,0=01,=~DIVISION,=~SECTION,0=~END,0=~THEN,0=~ELSE
 " Vars (b:/g:)
 "   cobol_indent_data_items - for DATA DIVISION: 0=none | (1)=B | 2=cascade
 "   cobol_indent_id_paras   - paragraphs in IDENTIFICATION DIVISION
+"   cobol_format_free       - FORMAT FREE indentation
 
 " Only define the function once.
 if exists("*GetCobolIndent") | finish | endif
-
-let s:sw_min = 6
-let s:sw_A   = s:sw_min + 1
-let s:sw_B   = s:sw_A   + 4
 
 let s:skip = 'getline(".") =~ "\\v^.{6}[*/$-]|\"[^\"]*\""'
 
@@ -35,7 +32,7 @@ function! s:prevgood(lnum) " Find a non-blank line above the current line.
   while lnum > 0
     let lnum = prevnonblank(lnum - 1)
     let line = getline(lnum)
-    if line !~? '^\s*[*/$-]' && line !~? '^.\{6\}[*/$CD-]' " Skip over comments.
+    if line !~? '\v^%(.{6}|\s*)[*/$D-]' " skip over comments etc.
       break
     endif
   endwhile
@@ -70,6 +67,23 @@ function! s:optionalblock(lnum, ind, blocks, clauses)
   endif
 
   return ind
+endfunction
+
+function! s:set_areas_vars(lnum)
+  let lnum = s:prevgood(a:lnum)
+  let line = s:stripped(lnum)
+  while lnum > 0 && line !~? '>>\s*SOURCE\s\?FORMAT'
+    let lnum = s:prevgood(lnum)
+    let line = s:stripped(lnum)
+  endwhile
+
+  if (line =~? 'FREE') || (s:get("cobol_format_free", 0) && line !~? "FIXED")
+    let [ s:sw_min, s:sw_A ] = [ 0, 0 ]
+  else
+    let s:sw_min = 6
+    let s:sw_A   = s:sw_min + 1
+  endif
+  let s:sw_B = s:sw_A + shiftwidth()
 endfunction
 
 " }}}
@@ -123,13 +137,19 @@ function! s:indent_data_items(cline, lnum)
 endfunction
 
 function! s:indent(lnum) abort
+  call s:set_areas_vars(a:lnum)
+
+  let cline = s:stripped(a:lnum)
+
+  " Directives
+  if cline =~? '^>>'
+      return s:sw_A
+  endif
 
   " (Legacy) numbered lines
   if s:get("cobol_legacy_code", 0) && getline(a:lnum) =~? '\v^\s*\d{6}%($|[ */$CD-])'
     return 0
   endif
-
-  let cline = s:stripped(a:lnum)
 
   " Comments, debugs etc. must start in the 7th column
   if cline =~? '^[*/$-]' || (cline =~? '^[CD]' && indent(a:lnum) == s:sw_min)

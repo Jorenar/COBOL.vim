@@ -43,6 +43,7 @@ Global (or buffer) variables:
 | `cobol_indent_data_items` |   `1`   | indentation of items in `DATA DIVISION` (`0` - all in area A, `1` - to area B, `2` - each level more indented)
 | `cobol_indent_id_paras`   |   `0`   | indent paragraphs in `IDENTIFICATION DIVISION` to area B
 | `cobol_comp_mp_cobc`      |   `0`   | if set to `1`, `compiler` will set `cobc\ -O\ -x` as `makeprg`
+| `cobol_format_free`       |   `0`   | set to `1` to have file in to have FORMAT FREE without compiler directives
 | `cobol_comp_mp`           |  `""`   | if not empty and `cobol_comp_mp_cobc` not set to `1`, the value will be used to set `makeprg`
 
 ---
