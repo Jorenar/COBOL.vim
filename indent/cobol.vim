@@ -137,8 +137,13 @@ function! s:indent_data_items(cline, lnum)
 endfunction
 
 function! s:indent(lnum) abort
-  call s:set_areas_vars(a:lnum)
+  " (Legacy) numbered lines
+  if s:get("cobol_legacy_code", 0) && getline(a:lnum) =~? '\v^\s*\d{6}%($|[ */$D-])'
+    return 0
+  endif
 
+
+  call s:set_areas_vars(a:lnum)
   let cline = s:stripped(a:lnum)
 
   " Directives
@@ -146,14 +151,15 @@ function! s:indent(lnum) abort
       return s:sw_A
   endif
 
-  " (Legacy) numbered lines
-  if s:get("cobol_legacy_code", 0) && getline(a:lnum) =~? '\v^\s*\d{6}%($|[ */$D-])'
-    return 0
-  endif
+  " Comments, debugs etc.
+  if cline =~? '^[*/$D-]'
+    if b:cobol_format_free && cline =~ '^. '
+      return 0
+    endif
 
-  " Comments, debugs etc. must start in the 7th column
-  if cline =~? '^[*/$-]' || (cline =~? '^D' && indent(a:lnum) == s:sw_min)
-    return s:sw_min
+    if cline !~? '^D' || indent(a:lnum) == s:sw_min
+      return s:sw_min
+    endif
   endif
 
   " Divisions, sections and file descriptions start in area A
