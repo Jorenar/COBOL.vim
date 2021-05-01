@@ -5,7 +5,7 @@
 syn keyword cobolReserved contained FUNCTION
 
 syn clear cobolComment
-syn match cobolComment '\v^%(\s|\d){6}[C*/].*$'
+syn match cobolComment '\v^%(\s|\d){6}[*/].*$'
 
 " FOLDING {{{1
 
@@ -33,7 +33,7 @@ function! s:foo(kw, ...) abort
   exec 'syntax region cobol' . a:kw . ' transparent fold'
         \ . ' containedin=ALL contains=@cobolLine,cobolComment'
         \ . ' start = "\v(<' . a:kw . ')@<=\s' . get(a:, 1, '') . '"'
-        \ . ' skip  = "\v^%(%(\s|\d){6}|\s*)?[*/C].*"'
+        \ . ' skip  = "\v^%(%(\s|\d){6}|\s*)?[*/].*"'
         \ . ' end   = "\ze\<END-' . a:kw . '\>"'
 endfunction
 

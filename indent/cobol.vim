@@ -147,12 +147,12 @@ function! s:indent(lnum) abort
   endif
 
   " (Legacy) numbered lines
-  if s:get("cobol_legacy_code", 0) && getline(a:lnum) =~? '\v^\s*\d{6}%($|[ */$CD-])'
+  if s:get("cobol_legacy_code", 0) && getline(a:lnum) =~? '\v^\s*\d{6}%($|[ */$D-])'
     return 0
   endif
 
   " Comments, debugs etc. must start in the 7th column
-  if cline =~? '^[*/$-]' || (cline =~? '^[CD]' && indent(a:lnum) == s:sw_min)
+  if cline =~? '^[*/$-D]'
     return s:sw_min
   endif
 
