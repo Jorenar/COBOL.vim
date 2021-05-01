@@ -9,7 +9,7 @@ let b:did_indent = 1
 setlocal expandtab
 setlocal indentexpr=GetCobolIndent(v:lnum)
 setlocal indentkeys&
-setlocal indentkeys+=0<*>,0/,0$,0=01,=~DIVISION,=~SECTION,0=~END,0=~THEN,0=~ELSE,0=~WHEN,*<CR>,.
+setlocal indentkeys+=0*,0/,0$,0D,0-,0=01,=~DIVISION,=~SECTION,0=~END,0=~THEN,0=~ELSE,0=~WHEN,*<CR>,.
 
 " Vars (b:/g:)
 "   cobol_indent_data_items - for DATA DIVISION: 0=none | (1)=B | 2=cascade
@@ -152,7 +152,7 @@ function! s:indent(lnum) abort
   endif
 
   " Comments, debugs etc. must start in the 7th column
-  if cline =~? '^[*/$-D]'
+  if cline =~? '^[*/$-]' || (cline =~? '^D' && indent(a:lnum) == s:sw_min)
     return s:sw_min
   endif
 
