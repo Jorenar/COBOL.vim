@@ -137,14 +137,13 @@ function! s:indent_data_items(cline, lnum)
 endfunction
 
 function! s:indent(lnum) abort
-  " (Legacy) numbered lines
-  if s:get("cobol_legacy_code", 0) && getline(a:lnum) =~? '\v^\s*\d{6}%($|[ */$D-])'
-    return 0
-  endif
-
-
   call s:set_areas_vars(a:lnum)
   let cline = s:stripped(a:lnum)
+
+  " Numbered lines
+  if cline =~? '\v^\d{6}%($|[ */$D-])'
+    return 0
+  endif
 
   " Directives
   if cline =~? '^>>'
