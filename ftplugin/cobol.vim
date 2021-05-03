@@ -15,6 +15,7 @@ let b:cobol_colorcolumns = s:get("cobol_colorcolumns", 0)
 let b:cobol_folding      = s:get("cobol_folding",      0)
 let b:cobol_format_free  = s:get("cobol_format_free",  0)
 let b:cobol_legacy_code  = s:get("cobol_legacy_code",  0)
+let b:cobol_syntax_compl = s:get("cobol_syntax_compl", 1)
 
 setlocal commentstring=\ \ \ \ \ \ *%s
 setlocal comments=:*:C
@@ -23,6 +24,11 @@ setlocal expandtab
 setlocal iskeyword=@,48-57,-,_
 
 let b:undo_ftplugin = "setlocal com< cms< fo< et< isk<"
+
+if b:cobol_syntax_compl
+  setlocal omnifunc=syntaxcomplete#Complete
+  let b:undo_ftplugin .= " ofu<"
+endif
 
 if !b:cobol_format_free
   setlocal textwidth=72
@@ -102,8 +108,6 @@ if !get(g:, "no_plugin_maps", 0) && !get(g:, "no_cobol_maps", 0)
 endif
 
 if b:cobol_autoupper
-  let g:omni_syntax_group_exclude_cobol = 'cobolBadLine,cobolComment,cobolDivision,cobolSection,cobolTodo'
-
   function! s:upper(k)
     if synIDattr(synID(line('.'), col('.')-1, 0), "name") !~# 'Comment\|String'
       return toupper(a:k)
@@ -113,7 +117,7 @@ if b:cobol_autoupper
   endfunction
 
   function! s:init_upper() abort
-    for k in syntaxcomplete#OmniSyntaxList() + [ "all", "by", "if", "to" ]
+    for k in syntaxcomplete#OmniSyntaxList() + get(b:, "cobol_syntax_missing_keywords", [])
       let k = tolower(k)
       exec "iabbrev <expr> <buffer> " . k . " <SID>upper('" . k . "')"
       let b:undo_ftplugin .= " | sil! exe 'iuna <buffer> " . k ."'"
