@@ -152,8 +152,8 @@ function! s:indent(lnum) abort
 
   " Comments, debugs etc.
   if cline =~? '^[*/$D-]'
-    if b:cobol_format_free && cline =~ '^. '
-      return 0
+    if cline =~? '^. '
+      return s:sw_min
     endif
 
     if cline !~? '^D' || indent(a:lnum) == s:sw_min
