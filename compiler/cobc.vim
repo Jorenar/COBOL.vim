@@ -9,7 +9,7 @@ let s:cpo_save = &cpo | set cpo&vim
 
 if get(g:, "cobol_comp_mp_cobc", 0)
   CompilerSet makeprg=cobc\ -O\ -x
-elseif !empty(get(g:, "cobol_comp_mp", "")
+elseif !empty(get(g:, "cobol_comp_mp", ""))
   exec "CompilerSet makeprg=".g:cobol_comp_mp
 endif
 
