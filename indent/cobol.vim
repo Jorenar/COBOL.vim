@@ -70,6 +70,12 @@ function! s:optionalblock(lnum, ind, blocks, clauses)
 endfunction
 
 function! s:set_areas_vars(lnum)
+  let s:sw_min = 6
+  let s:sw_A   = s:sw_min + 1
+  let s:sw_B   = s:sw_A   + 4
+
+  if s:get("cobol_legacy_code", 0) | return | endif
+
   let lnum = s:prevgood(a:lnum)
   let line = s:stripped(lnum)
   while lnum > 0 && line !~? '>>\s*SOURCE\s\?FORMAT'
@@ -78,12 +84,8 @@ function! s:set_areas_vars(lnum)
   endwhile
 
   if (line =~? 'FREE') || (s:get("cobol_format_free", 0) && line !~? "FIXED")
-    let [ s:sw_min, s:sw_A ] = [ 0, 0 ]
-  else
-    let s:sw_min = 6
-    let s:sw_A   = s:sw_min + 1
+    let [ s:sw_min, s:sw_A, s:sw_B ] = [ 0, 0, shiftwidth() ]
   endif
-  let s:sw_B = s:sw_A + shiftwidth()
 endfunction
 
 " }}}
