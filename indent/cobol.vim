@@ -32,7 +32,7 @@ function! s:prevgood(lnum) " Find a non-blank line above the current line.
   while lnum > 0
     let lnum = prevnonblank(lnum - 1)
     let line = getline(lnum)
-    if line !~? '\v^%(.{6}|\s*)[*/$D-]' " skip over comments etc.
+    if line !~? '\v^%(.{' . s:sw_min . '}|\s*)[*/$D-]' " skip over comments etc.
       break
     endif
   endwhile
