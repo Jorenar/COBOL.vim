@@ -249,7 +249,7 @@ syn cluster cobolFolds contains=cobol.*Fold
 " FORMAT FREE {{{1
 
 if b:cobol_format_free
-  syn region cobolFormatFree keepend contains=@cobolCode
+  syn region cobolFormatFree keepend contains=@cobolCode,@cobolFolds
         \ start = '\%1l'
         \ start = '>>\s*SOURCE\s\?FORMAT FREE'
         \ skip  = '^[*/].*$\|\*>.*'
