@@ -36,7 +36,7 @@ syn case ignore
 syn match cobolSeqNumArea  '\%<7c'
 syn match cobolIndicator   '\%7c'
 syn match cobolAB          '\%>7c\%<73c'    contains=@cobolCode
-syn match cobolProgIdArea      '\%>72c.\%<81c'
+syn match cobolProgIdArea  '\%>72c.\%<81c'
 syn match cobolOver80      '\%>80c.'
 
 syn cluster cobolAreas contains=cobolSeqNumArea,cobolIndicator,cobolAB,cobolProgIdArea
@@ -199,13 +199,13 @@ syn match cobolSeqNum '.'    contained containedin=cobolSeqNumArea
 
 syn match cobolGoTo   '\v<GO>\s*<TO>' contained
 
-syn match cobolCALLProg  /\v%(<CALL\s+)@<=(["']?)\k+\1/
+syn match cobolCallProg  /\v%(<CALL\s+)@<=(["']?)\k+\1/
 syn match cobolFunction  /\v%(<FUNCTION\s+)@<=\k+\ze\(.*\)/
 
 "  Highlight copybook name and location in using different group
-syn match cobolCopy      "\<COPY\>\|\<IN\>"
-syn match cobolCopy      "\<REPLACING\>\s\+\(==\)\@="
-syn match cobolCopy      "\<BY\>\s\+\(==\)\@="
+syn match cobolCopy      "\v<COPY>|<IN>"
+syn match cobolCopy      "\<REPLACING\>\ze\s\+=="
+syn match cobolCopy      "\<BY\>\ze\s\+=="
 syn match cobolCopyName  "\v<COPY>\s+\w+(\s+<IN>\s+\w+)?" contains=cobolCopy
 
 " FOLDING {{{1
@@ -249,7 +249,7 @@ syn cluster cobolFolds contains=cobol.*Fold
 " FORMAT FREE {{{1
 
 if b:cobol_format_free
-  syn region cobolFormatFree keepend contains=@cobolCode,@cobolFolds
+  syn region cobolFormatFree contains=@cobolCode,@cobolFolds
         \ start = '\%1l'
         \ start = '>>\s*SOURCE\s\?FORMAT FREE'
         \ skip  = '^[*/].*$\|\*>.*'
