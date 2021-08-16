@@ -32,7 +32,7 @@ function! s:prevgood(lnum) " Find a non-blank line above the current line.
   while lnum > 0
     let lnum = prevnonblank(lnum - 1)
     let line = getline(lnum)
-    if line !~? '\v^%(.{' . s:sw_min . '}|\s*)[*/$D-]' " skip over comments etc.
+    if line !~ '\v^%(.{' . s:sw_min . '}|\s*)[*/$D-]' " skip over comments etc.
       break
     endif
   endwhile
@@ -54,15 +54,15 @@ function! s:optionalblock(lnum, ind, blocks, clauses)
   let cline = s:stripped(a:lnum)
   let line  = s:stripped(s:prevgood(a:lnum))
 
-  if cline =~? clauses "&& line !~? '^search\>'
+  if cline =~ clauses "&& line !~ '^search\>'
     call cursor(a:lnum, 1)
     let lastclause = searchpair(beginfull, clauses, end, 'bWr', s:skip)
-    if getline(lastclause) =~? clauses && s:stripped(lastclause) !~? '^'.begin
+    if getline(lastclause) =~ clauses && s:stripped(lastclause) !~ '^'.begin
       let ind = indent(lastclause)
     elseif lastclause > 0
       let ind = indent(lastclause) + shiftwidth()
     endif
-  elseif line =~? clauses && cline !~? end
+  elseif line =~ clauses && cline !~ end
     let ind += shiftwidth()
   endif
 
@@ -91,23 +91,23 @@ endfunction
 " }}}
 
 function! s:indent_data_items(cline, lnum)
-  if a:cline =~? '\v^(0?1|66|77)>'
+  if a:cline =~ '\v^(0?1|66|77)>'
     return s:sw_A
   endif
 
   let x = s:get("cobol_indent_data_items", 1)
   if x == 0 | return s:sw_A | endif
 
-  if a:cline =~? '^78 '
+  if a:cline =~ '^78 '
     let line = s:stripped(s:prevgood(a:lnum))
     let lnum = a:lnum
 
-    while line !~? '\v<SECTION>.*($|\.)' && line !~? '\v^\d?\d '
+    while line !~ '\v<SECTION>.*($|\.)' && line !~ '\v^\d?\d '
       let lnum -= 1
       let line = s:stripped(s:prevgood(lnum))
     endwhile
 
-    if line =~? '\v<SECTION>.*($|\.)' || line =~? '\v^(66|77|78)'
+    if line =~ '\v<SECTION>.*($|\.)' || line =~ '\v^(66|77|78)'
       return s:sw_A
     endif
   endif
@@ -123,7 +123,7 @@ function! s:indent_data_items(cline, lnum)
     let line = s:stripped(lnum)
     let ind  = indent(lnum)
 
-    if line =~? '\v^\d?\d>'
+    if line =~ '\v^\d?\d>'
       let num = str2nr(matchstr(line, '\v^\d?\d>'))
       if cnum == num
         return ind
@@ -143,28 +143,28 @@ function! s:indent(lnum) abort
   let cline = s:stripped(a:lnum)
 
   " Numbered lines
-  if cline =~? '\v^\d{6}%($|[ */$D-])'
+  if cline =~ '\v^\d{6}%($|[ */$D-])'
     return 0
   endif
 
   " Directives
-  if cline =~? '^>>'
+  if cline =~ '^>>'
       return s:sw_A
   endif
 
   " Comments, debugs etc.
-  if cline =~? '^[*/$D-]'
-    if cline =~? '^. '
+  if cline =~ '^[*/$D-]'
+    if cline =~ '^. '
       return s:sw_min
     endif
 
-    if cline !~? '^D' || indent(a:lnum) == s:sw_min
+    if cline !~ '^D' || indent(a:lnum) == s:sw_min
       return s:sw_min
     endif
   endif
 
   " Divisions, sections and file descriptions start in area A
-  if cline =~? '\v<%(DIVISION|SECTION)>.*($|\.)' || cline =~? '^[FS]D\>'
+  if cline =~ '\v<%(DIVISION|SECTION)>.*($|\.)' || cline =~ '^[FS]D\>'
     return s:sw_A
   endif
 
@@ -176,19 +176,19 @@ function! s:indent(lnum) abort
   let [ line, ind ]  = [ s:stripped(lnum),  indent(lnum) ]
 
   " Paragraphs
-  if cline =~? '\v^(EXIT>)@<!\k+\.' && line =~? '\.\s*$'
-    if cline =~? '^\v<(PROGRAM-ID|AUTHOR|INSTALLATION|DATE-WRITTEN|DATE-COMPILED|SECURITY)>'
+  if cline =~ '\v^(EXIT>)@<!\k+\.' && line =~ '\.\s*$'
+    if cline =~ '^\v<(PROGRAM-ID|AUTHOR|INSTALLATION|DATE-WRITTEN|DATE-COMPILED|SECURITY)>'
       return s:get("cobol_indent_id_paras", 0) ? s:sw_B : s:sw_A
     endif
     return s:sw_A
   endif
 
   " Data items {{{
-  if cline =~? '\v^\d?\d>'
+  if cline =~ '\v^\d?\d>'
     return s:indent_data_items(cline, a:lnum)
   endif
 
-  if line =~? '\v^\d?\d>.*[^.]$'
+  if line =~ '\v^\d?\d>.*[^.]$'
     return ind + shiftwidth()
   endif
   " }}}
@@ -196,29 +196,29 @@ function! s:indent(lnum) abort
   " EVERYTHING ELSE {{{
 
   " TODO: does it make sense?
-  if line =~? '\v^%(UNTIL)>'
+  if line =~ '\v^%(UNTIL)>'
     let ind -= shiftwidth()
   endif
 
-  if line =~? '^PERFORM\>'
+  if line =~ '^PERFORM\>'
     let perfline = substitute(line, '^PERFORM\s*', "", "")
-    if perfline =~? '\v^%(\k+\s+TIMES)?\s*$'
+    if perfline =~ '\v^%(\k+\s+TIMES)?\s*$'
       let ind += shiftwidth()
-    elseif perfline =~? '\v^%(WITH\s+TEST|VARYING|UNTIL)>.*[^.]$'
+    elseif perfline =~ '\v^%(WITH\s+TEST|VARYING|UNTIL)>.*[^.]$'
       let ind += shiftwidth()
     endif
-  elseif line =~? '\v^%(IF|THEN|ELSE|READ|EVALUATE|SEARCH|SELECT)>'
+  elseif line =~ '\v^%(IF|THEN|ELSE|READ|EVALUATE|SEARCH|SELECT)>'
     let ind += shiftwidth()
   endif
 
   let ind = s:optionalblock(a:lnum, ind, 'ADD|COMPUTE|DIVIDE|MULTIPLY|SUBTRACT', 'ON\s+SIZE\s+ERROR')
   let ind = s:optionalblock(a:lnum, ind, 'STRING|UNSTRING|ACCEPT|DISPLAY|CALL', 'ON\s+OVERFLOW|ON\s+EXCEPTION')
 
-  if cline !~? '^AT\s\+END\>' || line !~? '^SEARCH\>'
+  if cline !~ '^AT\s\+END\>' || line !~ '^SEARCH\>'
     let ind = s:optionalblock(a:lnum, ind, 'DELETE|REWRITE|START|WRITE|READ', 'INVALID\s+KEY|AT\s+END|NO\s+DATA|AT\s+END-OF-PAGE')
   endif
 
-  if cline =~? '^WHEN\>'
+  if cline =~ '^WHEN\>'
     call cursor(a:lnum, 1)
     " Search for READ so that contained AT ENDs are skipped
     let lastclause = searchpair('\v-@<!<%(SEARCH|EVALUATE|READ)>',
@@ -226,47 +226,47 @@ function! s:indent(lnum) abort
           \                     '\v<END-%(SEARCH|EVALUATE|READ)>',
           \                     'bW',  s:skip)
 
-    if s:stripped(lastclause) =~? '\<\%(WHEN\|AT\s\+END\)\>'
-      "&& s:stripped(lastclause) !~? '^\%(SEARCH\|EVALUATE\|READ\)\>'
+    if s:stripped(lastclause) =~ '\<\%(WHEN\|AT\s\+END\)\>'
+      "&& s:stripped(lastclause) !~ '^\%(SEARCH\|EVALUATE\|READ\)\>'
       let ind = indent(lastclause)
     elseif lastclause > 0
       let ind = indent(lastclause) + shiftwidth()
     endif
-  elseif line =~? '^WHEN\>'
+  elseif line =~ '^WHEN\>'
     let ind += shiftwidth()
   endif
 
-  if cline =~? '\v^(END)>-@!'
+  if cline =~ '\v^(END)>-@!'
     let ind -= shiftwidth() " On lines with just END, 'guess' a simple shift left
-  elseif cline =~? '\v^(END-IF|THEN|ELSE)>-@!'
+  elseif cline =~ '\v^(END-IF|THEN|ELSE)>-@!'
     call cursor(a:lnum,indent(a:lnum))
     let match = searchpair('\v-@<!<IF>', '\v-@<!%(THEN|ELSE)>','\v-@<!<END-IF>\zs','bnW',s:skip)
     if match > 0
       let ind = indent(match)
     endif
-  elseif cline =~? '^END-\a'
+  elseif cline =~ '^END-\a'
     let beginword = matchstr(cline, '\<END-\zs\k\+')
 
     let suffix = '\v.*%(\n%(%(\s*|.{6})[*/].*\n)*)?\s*'
     let first  = 1
     let follow = ""
 
-    if beginword =~? '\v^%(ADD|COMPUTE|DIVIDE|MULTIPLY|SUBTRACT)$'
+    if beginword =~ '\v^%(ADD|COMPUTE|DIVIDE|MULTIPLY|SUBTRACT)$'
       let follow = '<%(NOT\s+)?ON\s+SIZE\s+ERROR'
-    elseif beginword =~? '\v^%(STRING|UNSTRING)$'
+    elseif beginword =~ '\v^%(STRING|UNSTRING)$'
       let follow = '<%(NOT\s+)?ON\s+OVERFLOW'
-    elseif beginword =~? '^\%(ACCEPT\|DISPLAY\)$'
+    elseif beginword =~ '^\%(ACCEPT\|DISPLAY\)$'
       let follow = '<%(NOT\s+)?ON\s+EXCEPTION'
     elseif beginword ==? 'CALL'
       let follow = '<%(NOT\s+)?ON\s+%(EXCEPTION|OVERFLOW)'
     elseif beginword ==? 'PERFORM'
       let follow = '<%(UNTIL)>' " TODO: finish this!
-    elseif beginword =~? '\v^%(DELETE|REWRITE|START|READ|WRITE)$'
+    elseif beginword =~ '\v^%(DELETE|REWRITE|START|READ|WRITE)$'
       let follow = '<%(NOT\s+)?(INVALID\s+KEY'
-      if beginword =~? '^READ'
+      if beginword =~ '^READ'
         let first = 0
         let follow .= '|AT\s+END|NO\s+DATA'
-      elseif beginword =~? '^WRITE'
+      elseif beginword =~ '^WRITE'
         let follow .= '|AT\s+END-OF-PAGE'
       endif
       let follow .= ')'
@@ -284,7 +284,7 @@ function! s:indent(lnum) abort
 
     if match > 0
       let ind = indent(match)
-    elseif cline =~? '\v^%(END-(READ|EVALUATE|SEARCH|PERFORM))>'
+    elseif cline =~ '\v^%(END-(READ|EVALUATE|SEARCH|PERFORM))>'
       let ind -= shiftwidth()
     endif
   endif
