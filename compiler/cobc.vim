@@ -13,6 +13,6 @@ elseif !empty(get(g:, "cobol_comp_mp", ""))
   exec "CompilerSet makeprg=".g:cobol_comp_mp
 endif
 
-CompilerSet errorformat=%f:%\s%#%l:\ %trror:\ %m
+CompilerSet errorformat=%f:%l:\ %trror:\ %m,%f:%l:\ %tarning:\ %m
 
 let &cpo = s:cpo_save | unlet s:cpo_save
