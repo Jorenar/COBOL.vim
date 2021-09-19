@@ -90,7 +90,7 @@ endfunction
 
 " }}}
 
-function! s:indent_data_items(cline, lnum)
+function! s:indent_data_items(cline, lnum) abort
   if a:cline =~ '\v^(0?1|66|77)>'
     return s:sw_A
   endif
@@ -156,9 +156,12 @@ function! s:indent(lnum) abort
   if cline =~ '^[*/$D-]'
     if cline =~ '^. '
       return s:sw_min
-    endif
-
-    if cline !~ '^D' || indent(a:lnum) == s:sw_min
+    elseif cline =~ '^D'
+      let g:foo =
+      if index(syntaxcomplete#OmniSyntaxList(), cline[:match(cline, '\k\+\zs')-1], 0, 1) < 0
+        return s:sw_min
+      endif
+    elseif indent(a:lnum) == s:sw_min
       return s:sw_min
     endif
   endif
@@ -168,12 +171,15 @@ function! s:indent(lnum) abort
     return s:sw_A
   endif
 
-  let lnum  = s:prevgood(a:lnum)
+  let lnum = s:prevgood(a:lnum)
 
   " Hit top of the file, so use area A indent
   if lnum == 0 | return s:sw_A | endif
 
   let [ line, ind ]  = [ s:stripped(lnum),  indent(lnum) ]
+
+  " Sentence
+  let ind -= line =~ '[.]$' ? shiftwidth() : 0
 
   " Paragraphs
   if cline =~ '\v^(EXIT>)@<!\k+\.' && line =~ '\.\s*$'
@@ -207,7 +213,7 @@ function! s:indent(lnum) abort
     elseif perfline =~ '\v^%(WITH\s+TEST|VARYING|UNTIL)>.*[^.]$'
       let ind += shiftwidth()
     endif
-  elseif line =~ '\v^%(IF|THEN|ELSE|READ|EVALUATE|SEARCH|SELECT)>'
+  elseif line =~ '\v^%(IF|THEN|ELSE|READ|EVALUATE|SEARCH|SELECT|STRING|UNSTRING|COMPUTE|ADD|SUBTRACT|DIVIDE|MULTIPLY|CALL|WRITE|REWRITE|RECEIVE|EXEC)>'
     let ind += shiftwidth()
   endif
 
@@ -251,15 +257,7 @@ function! s:indent(lnum) abort
     let first  = 1
     let follow = ""
 
-    if beginword =~ '\v^%(ADD|COMPUTE|DIVIDE|MULTIPLY|SUBTRACT)$'
-      let follow = '<%(NOT\s+)?ON\s+SIZE\s+ERROR'
-    elseif beginword =~ '\v^%(STRING|UNSTRING)$'
-      let follow = '<%(NOT\s+)?ON\s+OVERFLOW'
-    elseif beginword =~ '^\%(ACCEPT\|DISPLAY\)$'
-      let follow = '<%(NOT\s+)?ON\s+EXCEPTION'
-    elseif beginword ==? 'CALL'
-      let follow = '<%(NOT\s+)?ON\s+%(EXCEPTION|OVERFLOW)'
-    elseif beginword ==? 'PERFORM'
+    if beginword == 'PERFORM'
       let follow = '<%(UNTIL)>' " TODO: finish this!
     elseif beginword =~ '\v^%(DELETE|REWRITE|START|READ|WRITE)$'
       let follow = '<%(NOT\s+)?(INVALID\s+KEY'
@@ -280,8 +278,6 @@ function! s:indent(lnum) abort
           \                '',   '\<END-'. beginword .'\>\zs',
           \                'bnW'.(first ? 'r' : ''), s:skip )
 
-    let g:foo = match
-
     if match > 0
       let ind = indent(match)
     elseif cline =~ '\v^%(END-(READ|EVALUATE|SEARCH|PERFORM))>'
@@ -289,9 +285,9 @@ function! s:indent(lnum) abort
     endif
   endif
 
-  return ind < s:sw_B ? s:sw_B : ind
-
   " }}}
+
+  return ind < s:sw_B ? s:sw_B : ind
 
 endfunction
 
